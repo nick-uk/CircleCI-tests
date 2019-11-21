@@ -1,5 +1,5 @@
 defaults: &defaults
-  working_directory: /tmp/myproject
+  working_directory: /tmp/workspace
   docker:
     - image: circleci/golang:1.12.9
 
@@ -16,11 +16,23 @@ jobs:
           name: "Build container"
           command: |
             docker build -t tinyhttp:latest .
+      - run:
+          name: Archive Docker image
+          command: docker save -o image.tar tinyhttp:latest
+      - persist_to_workspace:
+          root: .
+          paths:
+            - ./image.tar
 
   test:
     <<: *defaults
     steps:
+      - attach_workspace:
+          at: /tmp/workspace
       - setup_remote_docker
+      - run:
+          name: Load archived Docker image
+          command: docker load -i /tmp/workspace/image.tar
       - run:
          name: "Test container"
          command: |
@@ -37,7 +49,12 @@ jobs:
            name: "Test container"
            command: |
             docker run -d --rm --name "test" tinyhttp:latest && \
-            curl http://127.0.0.1:8000
+            curl --request POST \
+            --url http://127.0.0.1:8000graphql \
+            --header 'authorization: Bearer ' \
+            --header 'content-type: application/json' \
+            --cookie REVEL_FLASH= \
+            --data '{"query":"mutation logIn($credentials: LogInput) {\n  logIn(credentials: $credentials) {\n    userId\n    token\n  }\n}\n","variables":{"credentials":{"email":"theuser","password":"thepassword"}}}'
             docker logs test
             docker stop test
 
@@ -70,7 +87,10 @@ workflows:
   version: 2
   build-test-deploy:
     jobs:
-      - build
+      - build:
+        # filters:
+        #   branches:
+        #     only: dev
       - test:
           requires: 
            - build
@@ -88,7 +108,13 @@ workflows:
           type: approval
           requires: 
            - e2etests
+          # filters:
+          #   branches:
+          #    only: master
       - prod-deploy:
           type: approval
           requires: 
            - stg-deploy
+          #  filters:
+          #   branches:
+          #    only: master
