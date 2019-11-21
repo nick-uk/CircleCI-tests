@@ -37,6 +37,8 @@ jobs:
          name: "Test container"
          command: |
           docker run -d --rm --name "test" -p 8000:8000 tinyhttp:latest && \
+          docker ps -a
+          sleep 2
           curl http://127.0.0.1:8000
           docker logs test
           docker stop test
@@ -54,6 +56,8 @@ jobs:
            name: "Test container"
            command: |
             docker run -d --rm --name "test" -p 8000:8000 tinyhttp:latest && \
+            docker ps -a
+            sleep 2
             curl --request POST \
             --url http://127.0.0.1:8000graphql \
             --header 'authorization: Bearer ' \
