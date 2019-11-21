@@ -8,6 +8,7 @@ jobs:
   build:
     <<: *defaults
     steps:
+      - checkout
       - setup_remote_docker
       - run: docker info
       - run: go version
