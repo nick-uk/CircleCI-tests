@@ -80,7 +80,9 @@ workflows:
           type: approval
           requires: 
            - publish
-      - e2etests
+      - e2etests:
+          requires:
+           - dev-deploy
       - stg-deploy:
           type: approval
           requires: 
