@@ -1,0 +1,91 @@
+defaults: &defaults
+  working_directory: /myproject
+  docker:
+    - image: circleci/golang:1.12.9
+
+version: 2
+jobs:
+  build:
+    <<: *defaults
+    steps:
+      - setup_remote_docker
+      - run: docker info
+      - run: go version
+      - run:
+          name: "Build container"
+          command: |
+            docker build -t tinyhttp:latest .
+
+  test:
+    <<: *defaults
+    steps:
+      - setup_remote_docker
+      - run:
+         name: "Test container"
+         command: |
+          docker run -d --rm --name "test" tinyhttp:latest && \
+          curl http://127.0.0.1:8000
+          docker logs test
+          docker stop test
+
+    e2etests:
+      <<: *defaults
+      steps:
+        - setup_remote_docker
+        - run:
+           name: "Test container"
+           command: |
+            docker run -d --rm --name "test" tinyhttp:latest && \
+            curl http://127.0.0.1:8000
+            docker logs test
+            docker stop test
+
+  publish:
+    <<: *defaults
+    steps:
+      - setup_remote_docker
+      - run:
+         name: "Publish Image"
+         command: |
+          docker tag tinyhttp:latest nickuk2/tinyhttp:latest
+          docker push nickuk2/tinyhttp:latest
+
+  dev-deploy:
+    <<: *defaults
+    steps:
+      - run: echo do something with dev
+
+  stg-deploy:
+    <<: *defaults
+    steps:
+      - run: echo do something with staging
+
+  prod-deploy:
+    <<: *defaults
+    steps:
+      - run: echo do something with production
+
+workflows:
+  version: 2
+  build-test-deploy:
+    jobs:
+      - build
+      - test:
+          requires: 
+           - build
+      - publish:
+          requires: 
+           - test
+      - dev-deploy:
+          type: approval
+          requires: 
+           - publish
+      - e2etests
+      - stg-deploy:
+          type: approval
+          requires: 
+           - e2etests
+      - prod-deploy:
+          type: approval
+          requires: 
+           - stg-deploy
