@@ -5,7 +5,7 @@ defaults: &defaults
 
 version: 2
 jobs:
-  build:
+  BUILD:
     <<: *defaults
     steps:
       - checkout
@@ -24,7 +24,7 @@ jobs:
           paths:
             - ./image.tar
 
-  test:
+  TEST:
     <<: *defaults
     steps:
       - attach_workspace:
@@ -36,12 +36,12 @@ jobs:
       - run:
          name: "Test container"
          command: |
-          docker run -d --rm --name "test" tinyhttp:latest && \
+          docker run -d --rm --name "test" -p 8000:8000 tinyhttp:latest && \
           curl http://127.0.0.1:8000
           docker logs test
           docker stop test
 
-    e2etests:
+    E2ETESTS:
       <<: *defaults
       steps:
         - attach_workspace:
@@ -53,7 +53,7 @@ jobs:
         - run:
            name: "Test container"
            command: |
-            docker run -d --rm --name "test" tinyhttp:latest && \
+            docker run -d --rm --name "test" -p 8000:8000 tinyhttp:latest && \
             curl --request POST \
             --url http://127.0.0.1:8000graphql \
             --header 'authorization: Bearer ' \
@@ -62,8 +62,17 @@ jobs:
             --data '{"query":"mutation logIn($credentials: LogInput) {\n  logIn(credentials: $credentials) {\n    userId\n    token\n  }\n}\n","variables":{"credentials":{"email":"theuser","password":"thepassword"}}}'
             docker logs test
             docker stop test
+      
+    QA:
+      <<: *defaults
+      steps:
+        - attach_workspace:
+            at: /tmp/workspace
+        - run: echo "Auto create Jira ticket"
 
-  publish:
+
+
+  PUBLISH:
     <<: *defaults
     steps:
       - attach_workspace:
@@ -78,17 +87,17 @@ jobs:
           docker tag tinyhttp:latest nickuk2/tinyhttp:latest
           docker push nickuk2/tinyhttp:latest
 
-  dev-deploy:
+  DEV-DEPLOY:
     <<: *defaults
     steps:
       - run: echo do something with dev
 
-  stg-deploy:
+  STG-DEPLOY:
     <<: *defaults
     steps:
       - run: echo do something with staging
 
-  prod-deploy:
+  PROD-DEPLOY:
     <<: *defaults
     steps:
       - run: echo do something with production
@@ -97,34 +106,38 @@ workflows:
   version: 2
   build-test-deploy:
     jobs:
-      - build
+      - BUILD
         # filters:
         #   branches:
         #     only: dev
-      - test:
+      - TEST:
           requires: 
-           - build
-      - publish:
+           - BUILD
+      - PUBLISH:
           requires: 
-           - test
-      - dev-deploy:
+           - TEST
+      - DEV-DEPLOY:
           type: approval
           requires: 
-           - publish
-      - e2etests:
+           - PUBLISH
+      - E2ETESTS:
           requires:
-           - dev-deploy
-      - stg-deploy:
+           - DEV-DEPLOY
+      - QA:
           type: approval
           requires: 
-           - e2etests
+           - E2ETESTS
+      - STG-DEPLOY:
+          type: approval
+          requires: 
+           - QA
           # filters:
           #   branches:
           #    only: master
-      - prod-deploy:
+      - PROD-DEPLOY:
           type: approval
           requires: 
-           - stg-deploy
+           - QA
           #  filters:
           #   branches:
           #    only: master
