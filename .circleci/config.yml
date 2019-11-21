@@ -38,8 +38,7 @@ jobs:
          command: |
           docker run -d --rm --name "test" -p 8000:8000 tinyhttp:latest && \
           docker ps -a
-          sleep 2
-          curl http://127.0.0.1:8000
+          curl http://$(echo $DOCKER_HOST | cut -d'/' -f3 | cut -d':' -f1):8000
           docker logs test
           docker stop test
 
@@ -57,9 +56,8 @@ jobs:
            command: |
             docker run -d --rm --name "test" -p 8000:8000 tinyhttp:latest && \
             docker ps -a
-            sleep 2
             curl --request POST \
-            --url http://127.0.0.1:8000graphql \
+            --url http://$(echo $DOCKER_HOST | cut -d'/' -f3 | cut -d':' -f1):8000/graphql \
             --header 'authorization: Bearer ' \
             --header 'content-type: application/json' \
             --cookie REVEL_FLASH= \
