@@ -37,7 +37,7 @@ jobs:
       - run:
          name: "Test container"
          command: |
-          ls ; docker-compose up -d && \
+          ls ; docker-compose up -d
           docker ps -a
           docker-compose exec test curl -v http://myservice:8000
           docker-compose logs myservice
@@ -55,23 +55,18 @@ jobs:
       - run:
           name: "Test container"
           command: |
-          docker-compose up -d && \
-          docker ps -a
-          docker-compose exec test curl --request POST \
-          --url http://$(echo $DOCKER_HOST | cut -d'/' -f3 | cut -d':' -f1):8000/graphql \
-          --header 'authorization: Bearer ' \
-          --header 'content-type: application/json' \
-          --cookie REVEL_FLASH= \
-          --data '{"query":"mutation logIn($credentials: LogInput) {\n  logIn(credentials: $credentials) {\n    userId\n    token\n  }\n}\n","variables":{"credentials":{"email":"theuser","password":"thepassword"}}}'
-          docker-compose logs myservice
-          docker-compose down
-      
-    QA:
-      <<: *defaults
-      steps:
-        - attach_workspace:
-            at: /tmp/workspace
-        - run: echo "Auto create Jira ticket"
+            docker-compose up -d
+            docker ps -a
+            docker-compose exec test curl --request POST --url http://$(echo $DOCKER_HOST | cut -d'/' -f3 | cut -d':' -f1):8000/graphql --header 'authorization: Bearer ' --header 'content-type: application/json' --cookie REVEL_FLASH= --data '{"query":"mutation logIn($credentials: LogInput) {\n  logIn(credentials: $credentials) {\n    userId\n    token\n  }\n}\n","variables":{"credentials":{"email":"theuser","password":"thepassword"}}}'
+            docker-compose logs myservice
+            docker-compose down
+    
+  QA:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: echo "Auto create Jira ticket"
 
 
 
