@@ -1,0 +1,12 @@
+version: '2'
+services:
+  myservice:
+    image: tinyhttp:latest
+    ports:
+      - "8000"
+  test:
+    #build: .
+    image: maiwj/curl
+    command: bash -c "
+    curl -v http://myservice:8000
+    "
