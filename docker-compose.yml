@@ -7,6 +7,4 @@ services:
   test:
     #build: .
     image: maiwj/curl
-    command: bash -c "
-    curl -v http://myservice:8000
-    "
+    command: bash -c "curl -v http://myservice:8000"
