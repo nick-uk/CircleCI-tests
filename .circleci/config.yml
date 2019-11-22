@@ -22,7 +22,8 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - ./image.tar
+            #- ./image.tar
+            - .
 
   TEST:
     <<: *defaults
@@ -36,7 +37,7 @@ jobs:
       - run:
          name: "Test container"
          command: |
-          docker-compose up -d && \
+          ls ; docker-compose up -d && \
           docker ps -a
           docker-compose exec test curl -v http://myservice:8000
           docker-compose logs myservice
