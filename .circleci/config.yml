@@ -36,11 +36,11 @@ jobs:
       - run:
          name: "Test container"
          command: |
-          docker run -d --rm --name "test" -p 8000:8000 tinyhttp:latest && \
+          docker-compose up -d && \
           docker ps -a
-          curl http://$(echo $DOCKER_HOST | cut -d'/' -f3 | cut -d':' -f1):8000
-          docker logs test
-          docker stop test
+          docker-compose exec test curl -v http://myservice:8000
+          docker-compose logs myservice
+          docker-compose down
 
     E2ETESTS:
       <<: *defaults
@@ -54,16 +54,16 @@ jobs:
         - run:
            name: "Test container"
            command: |
-            docker run -d --rm --name "test" -p 8000:8000 tinyhttp:latest && \
+            docker-compose up -d && \
             docker ps -a
-            curl --request POST \
+            docker-compose exec test curl --request POST \
             --url http://$(echo $DOCKER_HOST | cut -d'/' -f3 | cut -d':' -f1):8000/graphql \
             --header 'authorization: Bearer ' \
             --header 'content-type: application/json' \
             --cookie REVEL_FLASH= \
             --data '{"query":"mutation logIn($credentials: LogInput) {\n  logIn(credentials: $credentials) {\n    userId\n    token\n  }\n}\n","variables":{"credentials":{"email":"theuser","password":"thepassword"}}}'
-            docker logs test
-            docker stop test
+            docker-compose logs myservice
+            docker-compose down
       
     QA:
       <<: *defaults
