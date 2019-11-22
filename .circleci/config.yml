@@ -118,6 +118,7 @@ workflows:
           requires: 
            - BUILD
       - PUBLISH:
+          context: GLOBAL
           requires: 
            - TEST
       - DEV-DEPLOY:
@@ -129,10 +130,12 @@ workflows:
           requires:
            - DEV-DEPLOY
       - QA:
+          context: GLOBAL
           type: approval
           requires: 
            - E2ETESTS
       - STG-DEPLOY:
+          context: GLOBAL
           type: approval
           requires: 
            - QA
@@ -140,6 +143,7 @@ workflows:
           #   branches:
           #    only: master
       - PROD-DEPLOY:
+          context: GLOBAL
           type: approval
           requires: 
            - QA
